@@ -1,225 +1,177 @@
-/* ── Page content wrapper (centers scaled poster) ── */
-.page-content{
-  padding:2rem 1rem;
-  overflow-x:auto;
+/* ══════════════════════════════════════════════════════
+   globals.css — VC Stack poster, single-screen view.
+   The poster is 1920×1080 (16:9). We scale it to fit
+   the viewport using CSS scale() so it always shows
+   in full on one screen, on any device.
+   ══════════════════════════════════════════════════════ */
+
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #F8F8EE;
+  -webkit-font-smoothing: antialiased;
 }
-/* ── Poster scale wrapper ── */
-.poster-wrap{
-  width:1536px;   /* 1920 × 0.8 */
-  height:864px;   /* 1080 × 0.8 */
-  overflow:hidden;
-  margin:0 auto;
-  flex-shrink:0;
+
+/* ── Full-screen poster page ── */
+.poster-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
-/* ── Poster ── */
-.poster{
-  width:1920px;height:1080px;background:#F8F8EE;
-  display:flex;flex-direction:column;overflow:hidden;
-  border-radius:10px;box-shadow:0 6px 36px rgba(0,0,0,0.12);
-  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
-  transform:scale(0.8);
-  transform-origin:top left;
+
+/* ── The poster: fixed 1920×1080, scaled via JS ── */
+.poster {
+  width: 1920px;
+  height: 1080px;
+  background: #F8F8EE;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 6px 36px rgba(0,0,0,0.12);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  transform-origin: center center;
+  /* JS sets the scale; fallback to fit width */
+  transform: scale(var(--poster-scale, 0.7));
 }
-/* ── Header ── */
-.header{
-  background:#301008;text-align:center;padding:12px 32px;
-  flex-shrink:0;position:relative;
+
+/* ── Header bar ── */
+.header {
+  background: #301008;
+  text-align: center;
+  padding: 12px 32px;
+  flex-shrink: 0;
+  position: relative;
 }
-.header::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,#D21905 0%,#AB342B 40%,#D21905 70%,#AB342B 100%);
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #D21905 0%, #AB342B 40%, #D21905 70%, #AB342B 100%);
 }
-.hdr-row{display:inline-flex;align-items:center;gap:10px}
-.header h1{font-family:'Arapey',Georgia,serif;font-size:30px;font-weight:400;color:#F8F8EE;line-height:1.1}
-.header .sep{color:rgba(248,248,238,0.3);font-size:24px;font-weight:300}
-.header .curated{font-size:15px;color:rgba(248,248,238,0.45);font-weight:400}
-.logo-link{
-  display:inline-flex;align-items:center;
-  border-bottom:1.5px solid rgba(210,25,5,0.6);
-  padding-bottom:2px;transition:border-color 0.2s;
+.hdr-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
-.logo-link:hover{border-bottom-color:#D21905}
-.logo-link svg{height:18px;width:auto}
-/* ── Landscape ── */
-.landscape{
-  flex:1;display:flex;gap:7px;padding:8px;overflow:hidden;min-height:0;
+.header h1 {
+  font-family: 'Arapey', Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: #F8F8EE;
+  line-height: 1.1;
 }
-/* ── Columns ── */
-.col{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;overflow:hidden}
-/* ── Cards ── */
-.card{
-  background:#fff;border:1px solid rgba(25,24,22,0.08);border-radius:8px;
-  overflow:hidden;flex-shrink:0;
+.header .sep {
+  color: rgba(248,248,238,0.3);
+  font-size: 24px;
+  font-weight: 300;
 }
-.card-head{padding:7px 10px 4px}
-.card-head .name{
-  font-size:14px;font-weight:700;text-transform:uppercase;
-  letter-spacing:0.8px;color:#D21905;
+.header .curated {
+  font-size: 15px;
+  color: rgba(248,248,238,0.45);
+  font-weight: 400;
 }
+.logo-link {
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 1.5px solid rgba(210,25,5,0.6);
+  padding-bottom: 2px;
+  transition: border-color 0.2s;
+}
+.logo-link:hover { border-bottom-color: #D21905; }
+.logo-link svg { height: 18px; width: auto; }
+
+/* ── Landscape grid ── */
+.landscape {
+  flex: 1;
+  display: flex;
+  gap: 7px;
+  padding: 8px;
+  overflow: hidden;
+  min-height: 0;
+}
+.col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Category cards ── */
+.card {
+  background: #fff;
+  border: 1px solid rgba(25,24,22,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.card-head { padding: 7px 10px 4px; }
+.card-head .name {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #D21905;
+}
+
 /* ── Tool pills ── */
-.tools{display:flex;flex-wrap:wrap;gap:5px;padding:5px 8px 8px;align-content:flex-start}
-.t{
-  display:inline-flex;align-items:center;gap:5px;
-  border:1px solid #e8eaed;border-radius:8px;
-  padding:3px 9px 3px 3px;background:#fff;white-space:nowrap;
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px 8px 8px;
+  align-content: flex-start;
 }
-.t img{width:36px;height:36px;border-radius:6px;object-fit:contain;flex-shrink:0}
-.t-fb{
-  width:36px;height:36px;border-radius:6px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;
+.t {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  padding: 3px 9px 3px 3px;
+  background: #fff;
+  white-space: nowrap;
 }
-.t span{font-size:17px;font-weight:500;color:#191816;line-height:1.15}
-/* ── Poster footer (red gradient bar) ── */
-.poster-footer{
-  flex-shrink:0;height:4px;
-  background:linear-gradient(90deg,#D21905 0%,#AB342B 40%,#D21905 70%,#AB342B 100%);
+.t img {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
-
-/* ══════════════════════════════════════════════════════
-   DevLink CSS-module overrides
-   GlobalStyles injects hover CSS targeting plain class names
-   (.nav_link, .cta) but CSS modules hash them, so we use
-   attribute selectors to match the unhashed portion.
-   ══════════════════════════════════════════════════════ */
-
-/* ── Nav link: force uppercase (CSS-module specificity fix) ── */
-a[class*="nav_link"][class*="u-text-transform-uppercase"]{
-  text-transform:uppercase !important;
+.t-fb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
 }
-
-/* ── Nav link: hover effects ── */
-a[class*="nav_link"]:hover{
-  background:var(--_theme---text-link--text-background);
-  color:var(--_theme---text-link--text-hover);
-  border-color:var(--_theme---text-link--border-hover);
-}
-a[class*="nav_link"]:hover [class*="nav_link_text_line"]{
-  width:100%;
-}
-
-/* ── Nav link: active / current page ── */
-a[class*="nav_link"].w--current{
-  background:var(--_theme---text-link--text-background);
-  color:var(--_theme---text-link--text-hover);
-  border-color:var(--_theme---text-link--border-hover);
-}
-a[class*="nav_link"].w--current [class*="nav_link_text_line"]{
-  width:100%;
+.t span {
+  font-size: 17px;
+  font-weight: 500;
+  color: #191816;
+  line-height: 1.15;
 }
 
-/* ── CTA: hover effects ── */
-a[class*="cta"]:hover{
-  background:var(--swatch--pc-indian-vcs-red);
-  color:var(--swatch--sc-pearl-cream);
-}
-a[class*="cta"]:hover [class*="cta_line_abs"]{
-  width:100%;
-}
-
-/* ══════════════════════════════════════════════════════
-   DevLink variable fallback overrides
-   Webflow's mode-collection system doesn't resolve in
-   Next.js CSS modules, so heading fonts, sizes, and
-   other design tokens need explicit fallbacks.
-   ══════════════════════════════════════════════════════ */
-
-/* ── Headings: force Arapey + correct sizes ── */
-/* The mode-collection system doesn't resolve in Next.js,
-   so --_text-style---font-size falls back to 1rem (16px).
-   We must override with !important to beat CSS module specificity. */
-[class*="u-text-style-h1"],
-[class*="u-text-style-h2"],
-[class*="u-text-style-h3"],
-[class*="u-text-style-h4"],
-[class*="u-text-style-h5"]{
-  font-family:'Arapey','Times New Roman',sans-serif !important;
-  line-height:1.2 !important;
-  letter-spacing:-0.04em !important;
-  font-weight:400 !important;
-}
-[class*="u-text-style-h1"]{font-size:clamp(3rem, 2.5rem + 2.22vw, 5rem) !important}
-[class*="u-text-style-h2"]{font-size:clamp(2.5rem, 2rem + 2.22vw, 4rem) !important}
-[class*="u-text-style-h3"]{font-size:clamp(2rem, 1.5rem + 2.22vw, 3.5rem) !important}
-[class*="u-text-style-h4"]{font-size:clamp(1.5rem, 1.25rem + 1.11vw, 2rem) !important}
-[class*="u-text-style-h5"]{font-size:clamp(1.25rem, 1rem + 1.11vw, 1.5rem) !important}
-
-/* ── Contact heading size ── */
-[class*="contact-heading"]{
-  font-size:clamp(2rem, 1.5rem + 2.22vw, 3.5rem) !important;
-}
-
-/* ── Footer heading size + red color + constrained width for line break ── */
-[class*="footer_heading"]:not([class*="wrap"]){
-  font-size:clamp(2.5rem, 2rem + 2.22vw, 4rem) !important;
-  max-width:420px !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-}
-[class*="u-color-indian-vc-red"]{
-  color:var(--swatch--pc-indian-vcs-red, #d21905);
-}
-
-/* ── CTA base: uppercase + sizing (matches Webflow) ── */
-a[class*="cta"]{
-  text-transform:uppercase;
-  font-weight:500;
-  font-size:var(--_typography---font-size--text-small, 0.875rem);
-}
-
-/* ── Contact section dark bg fallback ── */
-[class*="section_contact"]{
-  background-color:var(--swatch--sc-charcoal, #191816);
-}
-
-/* ── Footer divider band: ensure 9px red ── */
-[class*="footer_divider_band"]{
-  background-color:var(--swatch--pc-indian-vcs-red, #d21905);
-  height:9px;
-}
-
-/* ── Cream text class (used in contact section) ── */
-[class*="text-color-cream"]{
-  color:var(--swatch--sc-pearl-cream, #f8f8ee);
-}
-
-/* ── Alignment utility: center (Webflow variable fallback) ── */
-[class*="u-alignment-center"]{
-  text-align:center !important;
-}
-
-/* ── Small text style: 14px (Webflow variable fallback) ── */
-[class*="u-text-style-small"]{
-  font-size:0.875rem !important;   /* 14px */
-  line-height:1.2 !important;
-}
-
-/* ── "pretty" class for Arapey italic ── */
-[class*="pretty"]{
-  font-family:'Arapey','Times New Roman',serif;
-  font-style:italic;
-}
-
-/* ══════════════════════════════════════════════════════
-   Webflow #w-node grid placement rules
-   DevLink export omits these ID-based grid-area rules
-   that position children inside CSS Grid containers.
-   Copied from the live indianvcs.com stylesheet.
-   ══════════════════════════════════════════════════════ */
-
-/* ── Footer top-grid: 3-col × 2-row layout ── */
-/* Image 1 (left): spans both rows */
-#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ec2-61942ec0{grid-area:1/1/3/2}
-/* Heading (center): spans both rows, aligned to bottom */
-#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ec5-61942ec0{grid-area:1/2/3/3;align-self:end}
-/* Image 2 (top-right): row 1 only */
-#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ec8-61942ec0{grid-area:1/3/2/4}
-/* Image 3 (bottom-right): row 2 only */
-#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ecb-61942ec0{grid-area:2/3/3/4}
-/* Legals wrap (bottom grid): spans 2 columns */
-#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ed7-61942ec0{grid-area:span 1/span 2/span 1/span 2}
-
-/* ── Footer legal links: right-align to match social icons above ── */
-[class*="legals_link_wrap"]{
-  justify-self:end !important;
+/* ── Bottom gradient bar ── */
+.poster-footer {
+  flex-shrink: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #D21905 0%, #AB342B 40%, #D21905 70%, #AB342B 100%);
 }

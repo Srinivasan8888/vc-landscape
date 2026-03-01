@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import "../../devlink/global.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

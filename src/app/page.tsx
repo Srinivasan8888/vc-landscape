@@ -2,11 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { IndianVCsLogo } from "./logo";
-import { DevLinkProvider } from "../../devlink/DevLinkProvider";
-import { GlobalStyles } from "../../devlink/GlobalStyles";
-import { Navbar } from "../../devlink/Navbar";
-import { ContactSection } from "../../devlink/ContactSection";
-import { Footer } from "../../devlink/Footer";
 
 /* ── Tool data ── */
 interface Tool {
@@ -157,43 +152,53 @@ function renderLandscape(el: HTMLDivElement) {
 
 export default function Home() {
   const landscapeRef = useRef<HTMLDivElement>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (landscapeRef.current) {
       renderLandscape(landscapeRef.current);
     }
+
+    // Scale poster to fit viewport
+    function fitPoster() {
+      if (!posterRef.current) return;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // poster is 1920×1080; add small padding
+      const pad = 24;
+      const scaleX = (vw - pad) / 1920;
+      const scaleY = (vh - pad) / 1080;
+      const scale = Math.min(scaleX, scaleY, 1); // never upscale
+      posterRef.current.style.transform = `scale(${scale})`;
+    }
+
+    fitPoster();
+    window.addEventListener("resize", fitPoster);
+    return () => window.removeEventListener("resize", fitPoster);
   }, []);
 
   return (
-    <DevLinkProvider>
-      <GlobalStyles />
-      <Navbar />
-      <div className="page-content">
-        <div className="poster-wrap">
-        <div className="poster">
-          <header className="header">
-            <div className="hdr-row">
-              <h1>VC Stack</h1>
-              <span className="sep">&middot;</span>
-              <span className="curated">curated by</span>
-              <a
-                href="https://hub.indianvcs.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="logo-link"
-                title="Indian VCs"
-              >
-                <IndianVCsLogo />
-              </a>
-            </div>
-          </header>
-          <div className="landscape" ref={landscapeRef} />
-          <div className="poster-footer" />
-        </div>
-        </div>
+    <div className="poster-page">
+      <div className="poster" ref={posterRef}>
+        <header className="header">
+          <div className="hdr-row">
+            <h1>VC Stack</h1>
+            <span className="sep">&middot;</span>
+            <span className="curated">curated by</span>
+            <a
+              href="https://hub.indianvcs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="logo-link"
+              title="Indian VCs"
+            >
+              <IndianVCsLogo />
+            </a>
+          </div>
+        </header>
+        <div className="landscape" ref={landscapeRef} />
+        <div className="poster-footer" />
       </div>
-      <ContactSection />
-      <Footer title="Shaping India's venture future" />
-    </DevLinkProvider>
+    </div>
   );
 }
