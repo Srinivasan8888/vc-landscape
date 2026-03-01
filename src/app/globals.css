@@ -185,3 +185,22 @@ a[class*="cta"]{
   font-family:'Arapey','Times New Roman',serif;
   font-style:italic;
 }
+
+/* ══════════════════════════════════════════════════════
+   Webflow #w-node grid placement rules
+   DevLink export omits these ID-based grid-area rules
+   that position children inside CSS Grid containers.
+   Copied from the live indianvcs.com stylesheet.
+   ══════════════════════════════════════════════════════ */
+
+/* ── Footer top-grid: 3-col × 2-row layout ── */
+/* Image 1 (left): spans both rows */
+#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ec2-61942ec0{grid-area:1/1/3/2}
+/* Heading (center): spans both rows, aligned to bottom */
+#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ec5-61942ec0{grid-area:1/2/3/3;align-self:end}
+/* Image 2 (top-right): row 1 only */
+#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ec8-61942ec0{grid-area:1/3/2/4}
+/* Image 3 (bottom-right): row 2 only */
+#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ecb-61942ec0{grid-area:2/3/3/4}
+/* Legals wrap (bottom grid): spans 2 columns */
+#w-node-a8557cf2-5af3-99f6-c20b-8b6061942ed7-61942ec0{grid-area:span 1/span 2/span 1/span 2}
