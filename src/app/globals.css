@@ -220,3 +220,129 @@ html, body {
 .footer-link:hover {
   border-bottom-color: #fff;
 }
+
+/* ══════════════════════════════════════════════════════
+   MOBILE: ≤768px — fixed header/footer, scrolling cards
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Full viewport, no scroll on html/body */
+  html, body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  /* Page wrapper: full viewport */
+  .poster-page {
+    overflow: hidden !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Poster: full viewport flex column, no transform */
+  .poster {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    transform: none !important;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Header: fixed at top */
+  .header {
+    flex-shrink: 0;
+    padding: 14px 16px;
+    transition: box-shadow 0.2s;
+  }
+  .header h1 {
+    font-size: 22px;
+    gap: 8px;
+  }
+  .logo-link svg {
+    height: 22px;
+  }
+
+  /* Landscape: scrollable card list between header & footer */
+  .landscape {
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Cards: full width, natural height */
+  .card {
+    flex: none;
+    border-radius: 10px;
+  }
+  .card-head {
+    padding: 8px 12px;
+  }
+  .card-head .name {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* Tool pills: touch-friendly sizing */
+  .tools {
+    gap: 6px;
+    padding: 8px 10px 10px;
+    align-content: flex-start;
+  }
+  .t {
+    min-height: 40px;
+    padding: 4px 12px 4px 4px;
+    gap: 6px;
+    border-radius: 10px;
+  }
+  .t img, .t-fb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+  .t-fb {
+    font-size: 11px;
+  }
+  .t span {
+    font-size: 14px;
+  }
+
+  /* Hide the static disclaimer; mobile disclaimer is inside the scroll area */
+  .disclaimer {
+    display: none;
+  }
+  .disclaimer-mobile {
+    display: block;
+    padding: 10px 4px;
+    font-size: 10px;
+    line-height: 1.4;
+    text-align: center;
+    color: #999;
+  }
+
+  /* Footer: fixed at bottom, compact */
+  .poster-footer {
+    flex-shrink: 0;
+    border-radius: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  .poster-footer > span:first-child {
+    display: none;
+  }
+  .footer-sep {
+    display: none;
+  }
+  .footer-link {
+    font-size: 14px;
+  }
+}

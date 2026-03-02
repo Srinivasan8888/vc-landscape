@@ -53,7 +53,7 @@ const D: Tool[] = [
   {n:"Circleback",c:"Transcription",d:"circleback.ai"},{n:"Fathom",c:"Transcription",d:"fathom.ai"},{n:"Fireflies",c:"Transcription",d:"fireflies.ai"},{n:"Granola",c:"Transcription",d:"granola.so"},{n:"Notion",c:"Transcription",d:"notion.so"},{n:"Otter",c:"Transcription",d:"otter.ai"},
 ];
 
-/* ── Column layout ── */
+/* ── Column layout (desktop poster) ── */
 const COLS = [
   ["CRM", "Admin/Ops", "Captable", "Voice to Text", "Mailing"],
   ["Data", "Finance", "Productivity", "Calendar"],
@@ -61,6 +61,21 @@ const COLS = [
   ["News", "AI", "Browser"],
   ["Other Tools", "Portfolio Mgmt", "Transcription"],
 ];
+
+/* ── Mobile: flat category order (logical VC workflow) ── */
+const MOBILE_ORDER = [
+  "CRM", "Data", "Research", "News", "AI",
+  "Portfolio Mgmt", "Captable", "Finance",
+  "Admin/Ops", "Automation",
+  "Communication", "Mailing", "Calendar",
+  "Transcription", "Voice to Text",
+  "Productivity", "Vibe Coding", "Browser",
+  "Other Tools",
+];
+
+function isMobile() {
+  return window.matchMedia("(max-width: 768px)").matches;
+}
 
 /* ── Fallback gradients for missing logos ── */
 const GRAD_PAIRS = [
@@ -84,6 +99,58 @@ function initials(name: string) {
     : (w[0][0] + w[1][0]).toUpperCase();
 }
 
+/* ── Build a single category card (shared by desktop & mobile) ── */
+function buildCard(cat: string, tools: Tool[]): HTMLDivElement {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const head = document.createElement("div");
+  head.className = "card-head";
+  const nm = document.createElement("span");
+  nm.className = "name";
+  nm.textContent = cat;
+  head.appendChild(nm);
+
+  card.appendChild(head);
+
+  const wrap = document.createElement("div");
+  wrap.className = "tools";
+  tools.forEach((t) => {
+    const pill = document.createElement("div");
+    pill.className = "t";
+    pill.title = t.n + (t.d ? " — " + t.d : "");
+
+    if (t.u || t.d) {
+      const img = document.createElement("img");
+      img.src = t.u || `https://www.google.com/s2/favicons?domain=${t.d}&sz=128`;
+      img.alt = "";
+      img.loading = "lazy";
+      if (t.bg) img.style.background = t.bg;
+      img.onerror = function () {
+        const fb = document.createElement("div");
+        fb.className = "t-fb";
+        fb.textContent = initials(t.n);
+        fb.style.background = gradient(t.n);
+        (this as HTMLElement).replaceWith(fb);
+      };
+      pill.appendChild(img);
+    } else {
+      const fb = document.createElement("div");
+      fb.className = "t-fb";
+      fb.textContent = initials(t.n);
+      fb.style.background = gradient(t.n);
+      pill.appendChild(fb);
+    }
+
+    const span = document.createElement("span");
+    span.textContent = t.n;
+    pill.appendChild(span);
+    wrap.appendChild(pill);
+  });
+  card.appendChild(wrap);
+  return card;
+}
+
 /* ── Render (DOM-based for performance with 147 tools) ── */
 function renderLandscape(el: HTMLDivElement) {
   el.innerHTML = "";
@@ -93,63 +160,35 @@ function renderLandscape(el: HTMLDivElement) {
     grouped[t.c].push(t);
   });
 
-  COLS.forEach((catList) => {
-    const col = document.createElement("div");
-    col.className = "col";
-    catList.forEach((cat) => {
+  const mobile = isMobile();
+
+  if (mobile) {
+    // Mobile: flat vertical list, no column wrappers
+    MOBILE_ORDER.forEach((cat) => {
       const tools = grouped[cat] || [];
       if (!tools.length) return;
       tools.sort((a, b) => a.n.localeCompare(b.n));
-
-      const card = document.createElement("div");
-      card.className = "card";
-      const head = document.createElement("div");
-      head.className = "card-head";
-      const nm = document.createElement("span");
-      nm.className = "name";
-      nm.textContent = cat;
-      head.appendChild(nm);
-      card.appendChild(head);
-
-      const wrap = document.createElement("div");
-      wrap.className = "tools";
-      tools.forEach((t) => {
-        const pill = document.createElement("div");
-        pill.className = "t";
-        pill.title = t.n + (t.d ? " — " + t.d : "");
-
-        if (t.u || t.d) {
-          const img = document.createElement("img");
-          img.src = t.u || `https://www.google.com/s2/favicons?domain=${t.d}&sz=128`;
-          img.alt = "";
-          img.loading = "lazy";
-          if (t.bg) img.style.background = t.bg;
-          img.onerror = function () {
-            const fb = document.createElement("div");
-            fb.className = "t-fb";
-            fb.textContent = initials(t.n);
-            fb.style.background = gradient(t.n);
-            (this as HTMLElement).replaceWith(fb);
-          };
-          pill.appendChild(img);
-        } else {
-          const fb = document.createElement("div");
-          fb.className = "t-fb";
-          fb.textContent = initials(t.n);
-          fb.style.background = gradient(t.n);
-          pill.appendChild(fb);
-        }
-
-        const span = document.createElement("span");
-        span.textContent = t.n;
-        pill.appendChild(span);
-        wrap.appendChild(pill);
-      });
-      card.appendChild(wrap);
-      col.appendChild(card);
+      el.appendChild(buildCard(cat, tools));
     });
-    el.appendChild(col);
-  });
+    // Append disclaimer at end of scroll area on mobile
+    const disc = document.createElement("div");
+    disc.className = "disclaimer disclaimer-mobile";
+    disc.innerHTML = "This market map is for informational purposes only and reflects publicly available data + editorial curation &bull; Not exhaustive &bull; No ranking, recommendation, or endorsement is implied &bull; All trademarks/logos are the property of their respective owners";
+    el.appendChild(disc);
+  } else {
+    // Desktop: 5-column poster layout
+    COLS.forEach((catList) => {
+      const col = document.createElement("div");
+      col.className = "col";
+      catList.forEach((cat) => {
+        const tools = grouped[cat] || [];
+        if (!tools.length) return;
+        tools.sort((a, b) => a.n.localeCompare(b.n));
+        col.appendChild(buildCard(cat, tools));
+      });
+      el.appendChild(col);
+    });
+  }
 }
 
 export default function Home() {
@@ -161,39 +200,69 @@ export default function Home() {
       renderLandscape(landscapeRef.current);
     }
 
-    // Scale poster to fit viewport. Poster is one fixed 1920×1080
-    // unit — it only scales, never reflows.
-    //
-    // All viewports: scale to fit entirely in viewport (like an image).
-    // On mobile the poster appears small — users pinch-to-zoom to
-    // read details (viewport meta allows up to 5× zoom).
+    // Scale poster to fit viewport (desktop only).
+    // On mobile, CSS handles full-width layout — no scaling needed.
     function fitPoster() {
       if (!posterRef.current) return;
       const page = posterRef.current.parentElement!;
+
+      if (isMobile()) {
+        // Mobile: clear all inline styles, let CSS take over
+        posterRef.current.style.transform = "";
+        page.style.width = "";
+        page.style.height = "";
+        page.style.overflow = "";
+        page.style.paddingLeft = "";
+        page.style.paddingTop = "";
+        return;
+      }
+
+      // Desktop: fit 1920×1080 poster in viewport
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-
-      // Fit poster inside viewport, then shrink 20% for breathing room
       const scale = Math.min(vw / 1920, vh / 1080, 1) * 0.96;
-
       const w = Math.ceil(1920 * scale);
       const h = Math.ceil(1080 * scale);
       posterRef.current.style.transform = `scale(${scale})`;
 
-      // Page fills viewport; poster is centered inside via padding.
-      // overflow:hidden hides the poster's 1920px layout box.
       page.style.width = `${vw}px`;
       page.style.height = `${vh}px`;
       page.style.overflow = "hidden";
-
-      // Center in viewport with padding
       page.style.paddingLeft = `${Math.max(0, (vw - w) / 2)}px`;
       page.style.paddingTop = `${Math.max(0, (vh - h) / 2)}px`;
     }
 
     fitPoster();
-    window.addEventListener("resize", fitPoster);
-    return () => window.removeEventListener("resize", fitPoster);
+
+    // Re-render landscape when crossing the mobile/desktop breakpoint
+    let wasMobile = isMobile();
+    function handleResize() {
+      const nowMobile = isMobile();
+      if (nowMobile !== wasMobile) {
+        wasMobile = nowMobile;
+        if (landscapeRef.current) renderLandscape(landscapeRef.current);
+      }
+      fitPoster();
+    }
+
+    window.addEventListener("resize", handleResize);
+
+    // Header scroll shadow (mobile only) — listens on .landscape since it's the scroll container
+    const landscapeEl = landscapeRef.current;
+    function onScroll() {
+      const header = document.querySelector(".header") as HTMLElement;
+      if (!header || !isMobile() || !landscapeEl) return;
+      header.style.boxShadow =
+        landscapeEl.scrollTop > 10
+          ? "0 2px 12px rgba(0,0,0,0.3)"
+          : "none";
+    }
+    landscapeEl?.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      landscapeEl?.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (
