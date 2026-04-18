@@ -1,26 +1,37 @@
 {
-  "name": "vc-landscape",
-  "version": "1.0.0",
+  "name": "vcstack-clone",
+  "version": "0.1.0",
   "private": true,
-  "description": "Indian VC Stack - Visual landscape of tools used by VCs and angel investors",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview"
+    "dev": "next dev -p 5000 -H 0.0.0.0",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate || true",
+    "start": "next start -p 5000 -H 0.0.0.0",
+    "lint": "eslint"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "1.6.5",
-    "next": "^15.3.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "@prisma/client": "^7.7.0",
+    "next": "^16.2.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "@webflow/webflow-cli": "^1.12.2",
-    "typescript": "^5.8.0",
-    "wrangler": "^4.23.0"
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.3",
+    "prisma": "^7.7.0",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
   }
 }

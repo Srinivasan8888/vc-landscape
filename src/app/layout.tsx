@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "VC Stack 2026 | Indian VCs",
     description:
-      "138+ tools across 19 categories — the complete tech stack powering India's top VCs. CRM, AI, Research, Data, News, Vibe Coding & more. Curated by Indian VCs.",
+      "138+ tools across 19 categories â the complete tech stack powering India's top VCs. CRM, AI, Research, Data, News, Vibe Coding & more. Curated by Indian VCs.",
     url: "https://indianvcs.com/tech-stack",
     siteName: "Indian VCs",
     type: "website",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "VC Stack 2026 | Indian VCs",
     description:
-      "138+ tools across 19 categories — the complete tech stack powering India's top VCs. Curated by Indian VCs.",
+      "138+ tools across 19 categories â the complete tech stack powering India's top VCs. Curated by Indian VCs.",
     creator: "@indianvcs",
   },
   robots: {
@@ -122,7 +122,7 @@ const jsonLd = {
       },
       mainEntity: {
         "@type": "ItemList",
-        name: "VC Tech Stack 2026 — Tools by Category",
+        name: "VC Tech Stack 2026 â Tools by Category",
         description:
           "138+ tools across 19 categories used by India's top venture capital firms",
         numberOfItems: 138,
@@ -180,7 +180,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* JSON-LD Structured Data */}
         <script

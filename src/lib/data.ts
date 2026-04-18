@@ -1,0 +1,325 @@
+/**
+ * Data-fetching layer.
+ * Tries Prisma first; falls back to STATIC_* constants so the UI
+ * renders in development without a live database.
+ */
+
+import type { Category, Tool, PaginatedResult, SearchFilters } from './types'
+import type { PreviewTool } from '@/components/cards/CategoryCard'
+import { setCategoryResolver, buildAllTools } from './tools-data'
+
+async function getPrisma() {
+  try {
+    const { prisma } = await import('./db/prisma')
+    return prisma
+  } catch {
+    return null
+  }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+export async function getCategories(): Promise<Category[]> {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      return await db.category.findMany({
+        include: { _count: { select: { tools: true } }, subCategories: true },
+        orderBy: { name: 'asc' },
+      })
+    } catch { /* fall through */ }
+  }
+  return STATIC_CATEGORIES
+}
+
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      return await db.category.findUnique({
+        where: { slug },
+        include: {
+          _count: { select: { tools: true } },
+          subCategories: { include: { _count: { select: { tools: true } } } },
+        },
+      })
+    } catch { /* fall through */ }
+  }
+  return STATIC_CATEGORIES.find((c) => c.slug === slug) ?? null
+}
+
+export async function getToolsByCategory(
+  categorySlug: string,
+  filters: SearchFilters = {}
+): Promise<PaginatedResult<Tool>> {
+  const { page = 1, pageSize = 24, pricing, query } = filters
+  const db = await getPrisma()
+  if (db) {
+    try {
+      const where = {
+        category: { slug: categorySlug },
+        ...(pricing ? { pricingModel: pricing } : {}),
+        ...(query
+          ? {
+              OR: [
+                { name: { contains: query, mode: 'insensitive' as const } },
+                { shortDesc: { contains: query, mode: 'insensitive' as const } },
+              ],
+            }
+          : {}),
+      }
+      const [data, total] = await Promise.all([
+        db.tool.findMany({
+          where,
+          include: { category: true, tags: true, _count: { select: { reviews: true } } },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy: [{ isFeatured: 'desc' }, { name: 'asc' }],
+        }),
+        db.tool.count({ where }),
+      ])
+      return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) }
+    } catch { /* fall through */ }
+  }
+  let filtered = STATIC_TOOLS.filter((t) => t.category?.slug === categorySlug)
+  if (pricing) filtered = filtered.filter((t) => t.pricingModel === pricing)
+  if (query) {
+    const q = query.toLowerCase()
+    filtered = filtered.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        (t.shortDesc ?? '').toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q)
+    )
+  }
+  const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const data = filtered.slice((page - 1) * pageSize, page * pageSize)
+  return { data, total, page, pageSize, totalPages }
+}
+
+const PINNED_SLUG = 'evertrace'
+
+function pinEverTrace<T extends { slug: string }>(list: T[]): T[] {
+  const idx = list.findIndex((t) => t.slug === PINNED_SLUG)
+  if (idx <= 0) return list
+  const copy = [...list]
+  const [pinned] = copy.splice(idx, 1)
+  copy.unshift(pinned)
+  return copy
+}
+
+function dedupeByWebsite<T extends { websiteUrl: string; name: string }>(list: T[]): T[] {
+  const seen = new Set<string>()
+  const out: T[] = []
+  for (const t of list) {
+    const key = (t.websiteUrl || `name:${t.name}`).replace(/\/+$/, '').toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(t)
+  }
+  return out
+}
+
+export async function getAllTools(): Promise<Tool[]> {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      const rows = await db.tool.findMany({
+        include: { category: true, tags: true, _count: { select: { reviews: true } } },
+        orderBy: [{ isFeatured: 'desc' }, { name: 'asc' }],
+      })
+      return pinEverTrace(dedupeByWebsite(rows))
+    } catch { /* fall through */ }
+  }
+  const sorted = [...STATIC_TOOLS].sort((a, b) =>
+    (Number(b.isFeatured) - Number(a.isFeatured)) || a.name.localeCompare(b.name)
+  )
+  return pinEverTrace(dedupeByWebsite(sorted))
+}
+
+export async function getFeaturedTools(limit = 12): Promise<Tool[]> {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      const rows = await db.tool.findMany({
+        where: { isFeatured: true },
+        include: { category: true, tags: true, _count: { select: { reviews: true } } },
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      })
+      return pinEverTrace(rows)
+    } catch { /* fall through */ }
+  }
+  return pinEverTrace(STATIC_TOOLS.filter((t) => t.isFeatured)).slice(0, limit)
+}
+
+export async function getToolBySlug(slug: string): Promise<Tool | null> {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      return await db.tool.findUnique({
+        where: { slug },
+        include: {
+          category: true,
+          subCategory: true,
+          tags: true,
+          reviews: {
+            where: { isApproved: true },
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+          },
+          _count: { select: { reviews: true } },
+        },
+      })
+    } catch { /* fall through */ }
+  }
+  return STATIC_TOOLS.find((t) => t.slug === slug) ?? null
+}
+
+export async function searchTools(filters: SearchFilters): Promise<PaginatedResult<Tool>> {
+  const { query = '', category, pricing, page = 1, pageSize = 24 } = filters
+  const db = await getPrisma()
+  if (db) {
+    try {
+      const where = {
+        ...(query
+          ? {
+              OR: [
+                { name: { contains: query, mode: 'insensitive' as const } },
+                { description: { contains: query, mode: 'insensitive' as const } },
+                { shortDesc: { contains: query, mode: 'insensitive' as const } },
+              ],
+            }
+          : {}),
+        ...(category ? { category: { slug: category } } : {}),
+        ...(pricing ? { pricingModel: pricing } : {}),
+      }
+      const [data, total] = await Promise.all([
+        db.tool.findMany({
+          where,
+          include: { category: true, tags: true, _count: { select: { reviews: true } } },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy: [{ isFeatured: 'desc' }, { name: 'asc' }],
+        }),
+        db.tool.count({ where }),
+      ])
+      return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) }
+    } catch { /* fall through */ }
+  }
+  let results = STATIC_TOOLS
+  if (query) {
+    const q = query.toLowerCase()
+    results = results.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        (t.shortDesc ?? '').toLowerCase().includes(q)
+    )
+  }
+  if (category) results = results.filter((t) => t.category?.slug === category)
+  if (pricing) results = results.filter((t) => t.pricingModel === pricing)
+  return { data: results, total: results.length, page: 1, pageSize: results.length, totalPages: 1 }
+}
+
+export async function getRelatedTools(toolId: string, categoryId: string, limit = 4): Promise<Tool[]> {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      return await db.tool.findMany({
+        where: { categoryId, id: { not: toolId } },
+        include: { category: true, tags: true },
+        take: limit,
+        orderBy: { isFeatured: 'desc' },
+      })
+    } catch { /* fall through */ }
+  }
+  return STATIC_TOOLS.filter((t) => t.categoryId === categoryId && t.id !== toolId).slice(0, limit)
+}
+
+export async function getSiteStats() {
+  const db = await getPrisma()
+  if (db) {
+    try {
+      const [toolCount, categoryCount, reviewCount, submissionCount] = await Promise.all([
+        db.tool.count(),
+        db.category.count(),
+        db.review.count({ where: { isApproved: true } }),
+        db.submission.count({ where: { status: 'PENDING' } }),
+      ])
+      return { toolCount, categoryCount, reviewCount, submissionCount }
+    } catch { /* fall through */ }
+  }
+  return {
+    toolCount: STATIC_TOOLS.length,
+    categoryCount: STATIC_CATEGORIES.length,
+    reviewCount: 0,
+    submissionCount: 0,
+  }
+}
+
+/** Returns up to 4 preview tools (name + logoUrl) per category slug. */
+export async function getCategoryPreviewTools(): Promise<Record<string, PreviewTool[]>> {
+  const result: Record<string, PreviewTool[]> = {}
+  for (const tool of STATIC_TOOLS) {
+    const slug = tool.category?.slug
+    if (!slug) continue
+    if (!result[slug]) result[slug] = []
+    if (result[slug].length < 4) {
+      result[slug].push({ name: tool.name, logoUrl: tool.logoUrl ?? null })
+    }
+  }
+  return result
+}
+
+// ─── Category images — served locally from public/images/categories/ ──────────
+const CAT_IMAGES: Record<string, string> = {
+  'crm':                      '/images/categories/crm.jpg',
+  'data':                     '/images/categories/data.jpg',
+  'research':                 '/images/categories/research.jpg',
+  'news':                     '/images/categories/news-resources.jpg',
+  'portfolio-management':     '/images/categories/portfolio-management.jpg',
+  'captable':                 '/images/categories/captable-equity-management.jpg',
+  'finance':                  '/images/categories/fund-admin-software.jpg',
+  'admin-ops':                '/images/categories/infrastructure.jpg',
+  'communication':            '/images/categories/video-conferencing.jpg',
+  'mailing':                  '/images/categories/email.jpg',
+  'calendar':                 '/images/categories/calendar.jpg',
+  'productivity':             '/images/categories/project-management.jpg',
+  'vibe-coding':              '/images/categories/platform.jpg',
+  'other-tools':              '/images/categories/other-tools.jpg',
+}
+
+// ─── Static fallback data (IndianVCs VC Stack 2026 — 19 sections) ─────────────
+
+export const STATIC_CATEGORIES: Category[] = [
+  { id: 'cat-1',  name: 'CRM',                 slug: 'crm',                 description: 'Relationship ledgers for private capital. Track every conversation, intro, and follow-up across the firm’s deal flow.',                                       icon: '🤝', imageUrl: CAT_IMAGES['crm'] ?? null,                 _count: { tools: 12 } },
+  { id: 'cat-2',  name: 'Data',                slug: 'data',                description: 'Market databases, company graphs, and private-market intelligence. The raw material behind every investment memo.',                                         icon: '📈', imageUrl: CAT_IMAGES['data'] ?? null,                _count: { tools: 13 } },
+  { id: 'cat-3',  name: 'Research',            slug: 'research',            description: 'Primary and secondary research workbenches. Expert calls, sector scans, and the long read behind a short decision.',                                     icon: '🔬', imageUrl: CAT_IMAGES['research'] ?? null,            _count: { tools: 15 } },
+  { id: 'cat-4',  name: 'News',                slug: 'news',                description: 'The daily broadsheet of venture. Feeds, aggregators, and newsletters investors read before the first coffee.',                                         icon: '📰', imageUrl: CAT_IMAGES['news'] ?? null,                _count: { tools: 14 } },
+  { id: 'cat-5',  name: 'AI',                  slug: 'ai',                  description: 'General-purpose copilots and assistants. The cognitive layer sitting under every other workflow on this page.',                                         icon: '✨', imageUrl: null,                                     _count: { tools: 7 } },
+  { id: 'cat-6',  name: 'Portfolio Management', slug: 'portfolio-management', description: 'Where a fund watches what it already owns. Metrics, KPIs, and quarterly letters for the companies on the cap table.',                              icon: '📊', imageUrl: CAT_IMAGES['portfolio-management'] ?? null, _count: { tools: 3 } },
+  { id: 'cat-7',  name: 'Captable',            slug: 'captable',            description: 'Equity ledgers and ownership records. Issue shares, model dilution, and keep the 409A tidy.',                                                         icon: '📑', imageUrl: CAT_IMAGES['captable'] ?? null,            _count: { tools: 3 } },
+  { id: 'cat-8',  name: 'Finance',             slug: 'finance',             description: 'Fund banking, treasury, and accounting. The plumbing that moves capital calls, distributions, and payroll.',                                        icon: '🏦', imageUrl: CAT_IMAGES['finance'] ?? null,             _count: { tools: 3 } },
+  { id: 'cat-9',  name: 'Admin & Ops',         slug: 'admin-ops',           description: 'Fund administration, compliance, and the operational scaffolding behind running a venture firm.',                                                 icon: '⚙️', imageUrl: CAT_IMAGES['admin-ops'] ?? null,           _count: { tools: 4 } },
+  { id: 'cat-10', name: 'Automation',          slug: 'automation',          description: 'Workflow glue. No-code engines that wire your CRM, inbox, and data room together without a developer.',                                          icon: '🔁', imageUrl: null,                                     _count: { tools: 4 } },
+  { id: 'cat-11', name: 'Communication',       slug: 'communication',       description: 'Where the partnership talks to itself and the outside world. Chat, video, and the rooms where diligence happens.',                              icon: '💬', imageUrl: CAT_IMAGES['communication'] ?? null,       _count: { tools: 4 } },
+  { id: 'cat-12', name: 'Mailing',             slug: 'mailing',             description: 'Inbox infrastructure. From founder LPs mail to quarterly newsletters, this is where correspondence is sent and filed.',                          icon: '📧', imageUrl: CAT_IMAGES['mailing'] ?? null,             _count: { tools: 4 } },
+  { id: 'cat-13', name: 'Calendar',            slug: 'calendar',            description: 'Booking, blocking, and defending time. Tools that decide when the partnership meets and when the founder gets ten minutes.',                     icon: '📅', imageUrl: CAT_IMAGES['calendar'] ?? null,            _count: { tools: 4 } },
+  { id: 'cat-14', name: 'Transcription',       slug: 'transcription',       description: 'Meeting recorders and note-takers. Every call, pitch, and partner meeting turned into searchable text.',                                          icon: '📝', imageUrl: null,                                     _count: { tools: 6 } },
+  { id: 'cat-15', name: 'Voice to Text',       slug: 'voice-to-text',       description: 'Dictation for the investor on the move. Turn voice memos between meetings into memos in the CRM.',                                              icon: '🎙️', imageUrl: null,                                     _count: { tools: 4 } },
+  { id: 'cat-16', name: 'Productivity',        slug: 'productivity',        description: 'Docs, wikis, and task boards. The second brain where theses, diligence, and portfolio notes all live.',                                         icon: '🗂️', imageUrl: CAT_IMAGES['productivity'] ?? null,        _count: { tools: 4 } },
+  { id: 'cat-17', name: 'Vibe Coding',         slug: 'vibe-coding',         description: 'AI-native builders for non-engineers. Prototype a landing page, a dashboard, or a diligence tool before lunch.',                                  icon: '🛠️', imageUrl: CAT_IMAGES['vibe-coding'] ?? null,         _count: { tools: 5 } },
+  { id: 'cat-18', name: 'Browser',             slug: 'browser',             description: 'The window to the work. Investor-grade browsers with tabs, workspaces, and AI built into the address bar.',                                      icon: '🌐', imageUrl: null,                                     _count: { tools: 6 } },
+  { id: 'cat-19', name: 'Other Tools',         slug: 'other-tools',         description: 'Everything else on the investor’s desktop. Design files, storage, shortcuts, and the utilities that refuse a tidier shelf.',                icon: '🔧', imageUrl: CAT_IMAGES['other-tools'] ?? null,         _count: { tools: 23 } },
+]
+
+function catById(id: string): Category {
+  return STATIC_CATEGORIES.find((c) => c.id === id) ?? STATIC_CATEGORIES[0]
+}
+
+// Wire up category resolver and build comprehensive tool catalog (510 tools)
+setCategoryResolver(catById)
+export const STATIC_TOOLS: Tool[] = buildAllTools()

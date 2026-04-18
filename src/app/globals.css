@@ -1,348 +1,289 @@
-/* ══════════════════════════════════════════════════════
-   globals.css — VC Stack poster, single-screen view.
-   The poster is 1920×1080 (16:9). We scale it to fit
-   the viewport using CSS scale(). On mobile, users
-   can pinch-to-zoom into the poster.
-   ══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   IndianVCs Design System — Broadsheet Newspaper
+   FT × Economist × HN density. Classic, editorial, calm, dense, readable.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Reset & base ── */
+@import "tailwindcss";
+
+/* ── Design Tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* Color */
+  --paper: #f5f0e8;
+  --paper-dark: #ede7db;
+  --paper-alt: #ede7db;
+  --ink: #1a1410;
+  --ink-light: #4a4035;
+  --ink-muted: #635a4a;
+  --red: #c0392b;
+  --red-dark: #962d22;
+  --rule: #c8bfb0;
+  --rule-dark: #9a9080;
+  --rule-heavy: #9a9080;
+  --success: #4a7c59;
+  --warning: #b8860b;
+
+  /* Fonts */
+  --serif: var(--font-playfair), Georgia, 'Times New Roman', serif;
+  --body: var(--font-source-serif), Georgia, serif;
+  --mono: var(--font-jetbrains), 'Courier New', monospace;
+
+  /* Type scale (base 17px) */
+  --fs-tiny: 0.55rem;
+  --fs-tag: 0.60rem;
+  --fs-btn: 0.65rem;
+  --fs-sub: 0.82rem;
+  --fs-meta: 0.88rem;
+  --fs-body: 0.88rem;
+  --fs-result: 0.95rem;
+  --fs-card: 1.05rem;
+  --fs-section: 1.2rem;
+  --fs-hero: 1.5rem;
+  --fs-brand: 2.8rem;
+  --fs-name: 2.6rem;
+  --fs-masthead: 4.2rem;
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Layout */
+  --page-max: 1120px;
+  --detail-max: 760px;
+  --modal-max: 620px;
+
+  /* Elevation */
+  --shadow-soft: 0 4px 12px rgba(26,20,16,0.12);
+  --shadow-pop: 0 8px 32px rgba(26,20,16,0.18);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --dur-fast: 0.15s;
+  --dur-med: 0.3s;
+  --dur-slow: 0.4s;
+}
+
+/* ── Base Styles ───────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  width: 100%;
-  height: 100%;
-  background: #F8F8EE;
-  -webkit-font-smoothing: antialiased;
-  /* Allow scroll on mobile when poster overflows */
-  overflow: auto;
+html { font-size: 17px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  line-height: 1.55;
+  min-height: 100vh;
 }
 
-/* ── Poster page wrapper ── */
-/* No flex centering — CSS transforms don't change layout size,
-   so flexbox would try to center a 1920px element and clip it.
-   JS handles sizing & centering via inline styles. */
-.poster-page {
-  overflow: hidden;
-  background: #F8F8EE;
-}
-
-/* ── The poster: fixed 1920×1080, scaled via JS ── */
-.poster {
-  width: 1920px;
-  height: 1080px;
-  background: #F8F8EE;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 10px;
-  box-shadow: 0 6px 36px rgba(0,0,0,0.12);
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  transform-origin: top left;
-  flex-shrink: 0;
-  /* JS sets the scale */
-  transform: scale(var(--poster-scale, 0.7));
-}
-
-/* ── Header bar ── */
-.header {
-  background: #301008;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 32px;
-  flex-shrink: 0;
-  position: relative;
-}
-.header::after {
+/* Subtle paper texture overlay */
+body::before {
   content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #D21905 0%, #AB342B 40%, #D21905 70%, #AB342B 100%);
-}
-.header h1 {
-  font-family: 'Arapey', Georgia, serif;
-  font-size: 42px;
-  font-weight: 400;
-  color: #F8F8EE;
-  line-height: 1;
-  letter-spacing: 1.5px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.logo-link {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-.logo-link:hover { opacity: 0.85; }
-.logo-link svg { height: 32px; width: auto; }
-
-/* ── Landscape grid ── */
-.landscape {
-  flex: 1;
-  display: flex;
-  gap: 7px;
-  padding: 20px 8px 20px;
-  overflow: hidden;
-  min-height: 0;
-}
-.col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.012) 2px,
+    rgba(0,0,0,0.012) 4px
+  );
+  z-index: -1;
 }
 
-/* ── Category cards ── */
-.card {
-  background: #fff;
-  border: 1px solid rgba(25,24,22,0.08);
-  border-radius: 8px;
-  overflow: hidden;
-  flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-}
-/* Dark heading bar — mirrors the poster header */
-.card-head {
-  background: #301008;
-  padding: 5px 10px;
-  position: relative;
-}
-/* Thin red accent line under heading — mirrors poster header::after */
-.card-head::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 1.5px;
-  background: linear-gradient(90deg, #D21905 0%, #AB342B 50%, #D21905 100%);
-}
-.card-head .name {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #F8F8EE;
-}
+h1, h2, h3, h4 { font-family: var(--serif); color: var(--ink); line-height: 1.15; }
+a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; }
+a:hover { color: var(--red); text-decoration-color: var(--red); }
+::selection { background: var(--red); color: var(--paper); }
 
-/* ── Tool pills ── */
-.tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 5px 8px 8px;
-  flex: 1;
-  align-content: center;
-}
-.t {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: 1px solid #e8eaed;
-  border-radius: 8px;
-  padding: 3px 9px 3px 3px;
-  background: #fff;
-  white-space: nowrap;
-}
-.t img {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  object-fit: contain;
-  flex-shrink: 0;
-  /* Subtle bg so white/transparent logos remain visible */
-  background: #f0f0ec;
-}
-.t-fb {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-}
-.t span {
-  font-size: 17px;
-  font-weight: 500;
-  color: #191816;
-  line-height: 1.15;
-}
+/* ── Layout ────────────────────────────────────────────────────────────── */
+.page { max-width: var(--page-max); margin: 0 auto; padding: 0 24px; }
+.page--detail { max-width: var(--detail-max); }
 
-/* ── Disclaimer strip ── */
-.disclaimer {
-  flex-shrink: 0;
+/* ── Masthead ──────────────────────────────────────────────────────────── */
+.masthead {
   text-align: center;
-  padding: 4px 32px;
-  font-size: 11px;
-  color: #777;
-  letter-spacing: 0.3px;
-  background: #F8F8EE;
-  border-top: 1px solid rgba(25,24,22,0.06);
+  padding: 32px 0 16px;
+  border-bottom: 1px solid var(--ink);
+}
+.masthead-title {
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: var(--fs-masthead);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.masthead-sub {
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-top: 12px;
 }
 
-/* ── Footer CTA bar ── */
-.poster-footer {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 14px 32px;
-  background: #D21905;
-  border-radius: 0 0 10px 10px;
-  font-size: 18px;
-  color: #fff;
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--mono);
+  font-size: var(--fs-btn);
   font-weight: 500;
-  letter-spacing: 0.3px;
-}
-.footer-sep {
-  opacity: 0.8;
-  font-size: 20px;
-}
-.footer-link {
-  color: #fff;
-  font-weight: 700;
-  font-size: 19px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 8px 18px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  border-radius: 0;
   text-decoration: none;
-  border-bottom: 2px solid rgba(255,255,255,0.5);
-  padding-bottom: 1px;
-  transition: border-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.footer-link:hover {
-  border-bottom-color: #fff;
+.btn:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
+
+.btn--primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--paper);
+}
+.btn--primary:hover { background: var(--red-dark); border-color: var(--red-dark); color: var(--paper); }
+
+.btn--ghost {
+  border-color: var(--rule);
+  color: var(--ink-muted);
+}
+.btn--ghost:hover { border-color: var(--ink); color: var(--ink); background: var(--paper-dark); }
+
+/* ── Tags / Pills ──────────────────────────────────────────────────────── */
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  color: var(--ink-muted);
+  background: var(--paper);
+}
+.tag--positive { color: var(--success); border-color: var(--success); }
+.tag--warning { color: var(--warning); border-color: var(--warning); }
+.tag--accent { color: var(--red); border-color: var(--red); }
+
+/* ── Row (HN-style feed item) ──────────────────────────────────────────── */
+.row {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: start;
+}
+.row-gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-muted);
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+}
+.row-title {
+  font-family: var(--serif);
+  font-size: var(--fs-card);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.row-meta {
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
+.row-body {
+  font-family: var(--body);
+  font-size: var(--fs-body);
+  color: var(--ink-light);
+  margin-top: 6px;
 }
 
-/* ══════════════════════════════════════════════════════
-   MOBILE: ≤768px — fixed header/footer, scrolling cards
-   ══════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-
-  /* Full viewport, no scroll on html/body */
-  html, body {
-    overflow: hidden;
-    height: 100%;
-  }
-
-  /* Page wrapper: full viewport */
-  .poster-page {
-    overflow: hidden !important;
-    width: 100% !important;
-    height: 100% !important;
-    padding: 0 !important;
-  }
-
-  /* Poster: full viewport flex column, no transform */
-  .poster {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    transform: none !important;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  /* Header: fixed at top */
-  .header {
-    flex-shrink: 0;
-    padding: 14px 16px;
-    transition: box-shadow 0.2s;
-  }
-  .header h1 {
-    font-size: 22px;
-    gap: 8px;
-  }
-  .logo-link svg {
-    height: 22px;
-  }
-
-  /* Landscape: scrollable card list between header & footer */
-  .landscape {
-    flex: 1;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Cards: full width, natural height */
-  .card {
-    flex: none;
-    border-radius: 10px;
-  }
-  .card-head {
-    padding: 8px 12px;
-  }
-  .card-head .name {
-    font-size: 13px;
-    letter-spacing: 1px;
-  }
-
-  /* Tool pills: touch-friendly sizing */
-  .tools {
-    gap: 6px;
-    padding: 8px 10px 10px;
-    align-content: flex-start;
-  }
-  .t {
-    min-height: 40px;
-    padding: 4px 12px 4px 4px;
-    gap: 6px;
-    border-radius: 10px;
-  }
-  .t img, .t-fb {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-  }
-  .t-fb {
-    font-size: 11px;
-  }
-  .t span {
-    font-size: 14px;
-  }
-
-  /* Hide the static disclaimer; mobile disclaimer is inside the scroll area */
-  .disclaimer {
-    display: none;
-  }
-  .disclaimer-mobile {
-    display: block;
-    padding: 10px 4px;
-    font-size: 10px;
-    line-height: 1.4;
-    text-align: center;
-    color: #999;
-  }
-
-  /* Footer: fixed at bottom, compact */
-  .poster-footer {
-    flex-shrink: 0;
-    border-radius: 0;
-    padding: 10px 16px;
-    font-size: 13px;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 6px;
-  }
-  .poster-footer > span:first-child {
-    display: none;
-  }
-  .footer-sep {
-    display: none;
-  }
-  .footer-link {
-    font-size: 14px;
-  }
+/* ── Form Inputs ───────────────────────────────────────────────────────── */
+.input, .textarea, .select {
+  width: 100%;
+  font-family: var(--body);
+  font-size: var(--fs-body);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 10px 12px;
+  border-radius: 0;
+  transition: border-color var(--dur-fast);
 }
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.label {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+/* ── Rules & Dividers ──────────────────────────────────────────────────── */
+.rule       { border-top: 1px solid var(--rule); margin: 16px 0; }
+.rule--bold { border-top: 2px solid var(--ink); margin: 24px 0; }
+.rule--double { border-top: 3px double var(--ink); margin: 24px 0; }
+
+/* ── Skeletons / Empty / Error ─────────────────────────────────────────── */
+.skeleton { background: var(--paper-dark); height: 1em; border-radius: 0; animation: shimmer 1.4s infinite; }
+@keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+.empty, .error {
+  text-align: center;
+  padding: 48px 24px;
+  font-family: var(--body);
+  color: var(--ink-muted);
+  border: 1px dashed var(--rule);
+}
+.error { color: var(--red); border-color: var(--red); }
+
+/* ── Section Header ────────────────────────────────────────────────────── */
+.section-header {
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+/* ── Breadcrumb ────────────────────────────────────────────────────────── */
+.breadcrumb {
+  font-family: var(--mono);
+  font-size: var(--fs-tag);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  margin-bottom: 24px;
+}
+.breadcrumb a { color: var(--ink-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--red); }
+.breadcrumb .sep { margin: 0 6px; }
